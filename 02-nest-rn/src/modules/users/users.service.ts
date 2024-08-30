@@ -10,12 +10,14 @@ import mongoose from 'mongoose';
 import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid';
 import * as dayjs from 'dayjs';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name)
     private userModel: Model<User>,
+    private readonly mailerService: MailerService,
   ) {}
 
   // check email exist
@@ -68,7 +70,7 @@ export class UsersService {
   findOne(id: number) {
     return `This action returns a #${id} user`;
   }
-  async findByEmail(email : string) {
+  async findByEmail(email: string) {
     return await this.userModel.findOne({ email });
   }
   async update(updateUserDto: UpdateUserDto) {
@@ -80,16 +82,15 @@ export class UsersService {
 
   async remove(_id: string) {
     // check id
-    if(mongoose.isValidObjectId(_id)){
+    if (mongoose.isValidObjectId(_id)) {
       // delete
-      return this.userModel.deleteOne({_id})
-    }
-    else {
+      return this.userModel.deleteOne({ _id });
+    } else {
       throw new BadRequestException('id không đúng định dạng');
     }
   }
 
-  async handleRegister(registerDto:CreateAuthDto) {
+  async handleRegister(registerDto: CreateAuthDto) {
     const { name, email, password } = registerDto;
     // check email
     const isExist = await this.isEmailExist(email);
@@ -99,21 +100,31 @@ export class UsersService {
       );
     //hash password
     const hashPassword = await hashPasswordHelper(password);
+    const codeId = uuidv4();
     const user = await this.userModel.create({
       name,
       email,
       password: hashPassword,
-      isActive : false,
-      codeId :uuidv4(),
-      codeExpired : dayjs().add(1, 'minutes')
+      isActive: false,
+      codeId,
+      // codeExpired: dayjs().add(5, 'minutes'),
+      codeExpired: dayjs().add(30, 'seconds'),
+    });
+
+    // send email
+    this.mailerService.sendMail({
+      to: user.email, // list of receivers
+      subject: 'Activate your account at @hodinhthanhluan', // Subject line
+      template: 'register.hbs',
+      context: {
+        name: user?.name ?? user.email,
+        activationCode: codeId,
+      },
     });
 
     // trả ra phản hồi
     return {
       _id: user._id,
     };
-
-    // send email
-
   }
 }
