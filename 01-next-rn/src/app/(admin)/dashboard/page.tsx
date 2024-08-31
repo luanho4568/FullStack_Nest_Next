@@ -1,5 +1,3 @@
-'use client'
-
 import AdminCard from "@/components/admin/admin.card";
 
 const DashboardPage = () => {
