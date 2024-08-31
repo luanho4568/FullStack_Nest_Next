@@ -1,9 +1,9 @@
-import React from 'react'
-
 const ManageProductPage = () => {
-  return (
-    <div>Manage Product page</div>
-  )
+    return (
+        <div>
+            ManageProductPage page
+        </div>
+    )
 }
 
-export default ManageProductPage
+export default ManageProductPage;
