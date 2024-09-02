@@ -1,27 +1,30 @@
 "use client";
 import React from "react";
-import { Button, Col, Divider, Form, Input, notification, Row } from "antd";
+import { Button, Col, Divider, Form, Input, message, notification, Row } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { sendRequest } from "@/utils/api";
 import { useRouter } from "next/navigation";
 
-const Register = () => {
+const Verify = (props: any) => {
+    const { id } = props;
     const router = useRouter();
 
     const onFinish = async (values: any) => {
-        const { email, password, name } = values;
+        const { _id, code } = values;
+
         const res = await sendRequest<IBackendRes<any>>({
-            url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/register`,
+            url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/check-code`,
             method: "POST",
-            body: { email, password, name },
+            body: { _id, code },
         });
         console.log(">>> check res: ", res);
         if (res?.data) {
-            router.push(`/verify/${res?.data?._id}`);
+            message.success("Kích hoạt tài khoản thành công");
+            router.push(`/auth/login`);
         } else {
             notification.error({
-                message: "Register Error",
+                message: "Verify Error",
                 description: res?.message,
             });
         }
@@ -38,35 +41,23 @@ const Register = () => {
                         borderRadius: "5px",
                     }}
                 >
-                    <legend>Đăng Ký Tài Khoản</legend>
+                    <legend>Kích hoạt tài khoản</legend>
                     <Form name="basic" onFinish={onFinish} autoComplete="off" layout="vertical">
+                        <Form.Item label="Id" name="_id" initialValue={id} hidden>
+                            <Input disabled />
+                        </Form.Item>
+                        <div>Mã code đã được gữi tới email đăng ký, vui lòng kiểm tra email.</div>
+                        <Divider />
                         <Form.Item
-                            label="Email"
-                            name="email"
+                            label="Code"
+                            name="code"
                             rules={[
                                 {
                                     required: true,
-                                    message: "Please input your email!",
+                                    message: "Please input your code!",
                                 },
                             ]}
                         >
-                            <Input />
-                        </Form.Item>
-
-                        <Form.Item
-                            label="Password"
-                            name="password"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: "Please input your password!",
-                                },
-                            ]}
-                        >
-                            <Input.Password />
-                        </Form.Item>
-
-                        <Form.Item label="Name" name="name">
                             <Input />
                         </Form.Item>
 
@@ -88,5 +79,4 @@ const Register = () => {
         </Row>
     );
 };
-
-export default Register;
+export default Verify;
